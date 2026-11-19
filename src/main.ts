@@ -1,6 +1,7 @@
 import {
   EyeTracker,
   MouseGazeSource,
+  POOR_CALIBRATION,
   RemoteGazeSource,
   runCalibration,
   type GazeSample,
@@ -175,7 +176,8 @@ async function calibrate(): Promise<void> {
   paused = true;
   const result = await runCalibration(source, { points: 9, fullscreen: true });
   paused = wasPaused;
-  if (result.ok) flash(`Calibrated: about ${Math.round(result.crossError * 100)}% of the screen off, typically.`);
+  if (result.ok && result.crossError > POOR_CALIBRATION) flash('That calibration was poor. Face the light, keep your head still, and press C to try again.');
+  else if (result.ok) flash(`Calibrated: about ${Math.round(result.crossError * 100)}% of the screen off, typically.`);
   else if (result.reason !== 'cancelled') flash(`Calibration failed: ${result.reason}.`);
   restart();
 }
