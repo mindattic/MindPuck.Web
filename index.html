@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Move the puck into the goal by looking where you don't want it to go.">
+<title>MindPuck</title>
+<link rel="stylesheet" href="./src/style.css">
+</head>
+<body>
+<canvas id="table"></canvas>
+
+<header class="hud hud-top">
+  <div class="brand">MindPuck <span id="level">Level 1</span></div>
+  <div class="clock"><span id="time">0.0</span><small>par <span id="par">-</span></small></div>
+</header>
+
+<footer class="hud hud-bottom">
+  <div id="status" class="status">Choose how to play</div>
+  <nav>
+    <button data-act="restart" title="Restart this level (R)">Restart</button>
+    <button data-act="skip" title="Skip to the next level (N)">Skip</button>
+    <button data-act="bot" title="Watch the solver play this level (B)">Show me</button>
+    <button data-act="calibrate" title="Calibrate eye tracking (C)">Calibrate</button>
+    <button data-act="menu" title="Change how you play (Esc)">Input</button>
+  </nav>
+</footer>
+
+<div id="banner" class="banner" hidden></div>
+
+<section id="menu" class="menu">
+  <div class="card">
+    <h1>MindPuck</h1>
+    <p class="lead">Your gaze pushes the puck away. Look where you <em>don't</em> want it to go.</p>
+    <ul class="how">
+      <li>Look behind the puck to send it forward. The closer you look, the harder the push.</li>
+      <li>Look far away and it glides on its own.</li>
+      <li>Bring it to rest on the amber pad.</li>
+    </ul>
+    <div class="choices">
+      <button data-source="camera"><strong>Use this camera</strong><span>Webcam eye tracking on this device</span></button>
+      <button data-source="phone"><strong>Use my phone</strong><span>The phone's camera watches your eyes</span></button>
+      <button data-source="mouse"><strong>Use the pointer</strong><span>Mouse or finger stands in for your eyes</span></button>
+    </div>
+    <p id="menu-note" class="note"></p>
+  </div>
+</section>
+
+<script type="module" src="./src/main.ts"></script>
+</body>
+</html>

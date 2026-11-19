@@ -1,0 +1,264 @@
+:root {
+  color-scheme: dark;
+  --ink: #e8eefc;
+  --dim: #8b96ad;
+  --line: #1f2836;
+  --bg: #05070d;
+  --panel: rgba(9, 13, 21, 0.84);
+  --accent: #7fd4ff;
+  --goal: #ffc266;
+  --ok: #5fe3a1;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font: 500 15px/1.45 system-ui, "Segoe UI", sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+#table {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+.hud {
+  position: fixed;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 18px;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.hud-top {
+  top: 0;
+}
+
+.hud-bottom {
+  bottom: 0;
+}
+
+.brand {
+  font-size: 12px;
+  font-weight: 650;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--dim);
+}
+
+.brand span {
+  color: var(--ink);
+  margin-left: 12px;
+}
+
+.clock {
+  font-size: 22px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  line-height: 1.1;
+}
+
+.clock small {
+  display: block;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--dim);
+}
+
+.clock.beat #time {
+  color: var(--ok);
+}
+
+.status {
+  color: var(--dim);
+  font-size: 13px;
+  max-width: 46ch;
+}
+
+.status.warn {
+  color: var(--goal);
+}
+
+nav {
+  display: flex;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+button {
+  font: inherit;
+  color: var(--ink);
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  padding: 7px 12px;
+  cursor: pointer;
+}
+
+button:hover {
+  border-color: #33435c;
+}
+
+button:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+button[aria-pressed="true"] {
+  border-color: var(--ok);
+  color: var(--ok);
+}
+
+.banner {
+  position: fixed;
+  left: 50%;
+  top: 44%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  text-align: center;
+  pointer-events: none;
+  font-size: clamp(40px, 9vw, 110px);
+  font-weight: 750;
+  letter-spacing: 0.08em;
+  color: var(--goal);
+  text-shadow: 0 0 40px rgba(255, 194, 102, 0.5);
+  animation: pop 0.35s cubic-bezier(0.2, 1.4, 0.4, 1);
+}
+
+.banner small {
+  display: block;
+  font-size: 16px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  text-shadow: none;
+}
+
+@keyframes pop {
+  from {
+    transform: translate(-50%, -50%) scale(0.7);
+    opacity: 0;
+  }
+}
+
+.menu {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(5, 7, 13, 0.72);
+  backdrop-filter: blur(6px);
+}
+
+.menu[hidden] {
+  display: none;
+}
+
+.card {
+  width: min(560px, 100%);
+  padding: 28px;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  user-select: text;
+}
+
+.card h1 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--dim);
+  font-weight: 650;
+}
+
+.lead {
+  margin: 0 0 14px;
+  font-size: 24px;
+  line-height: 1.25;
+  font-weight: 600;
+  text-wrap: balance;
+}
+
+.lead em {
+  font-style: normal;
+  color: var(--accent);
+}
+
+.how {
+  margin: 0 0 20px;
+  padding-left: 18px;
+  color: var(--dim);
+}
+
+.choices {
+  display: grid;
+  gap: 8px;
+}
+
+.choices button {
+  display: grid;
+  gap: 1px;
+  text-align: left;
+  padding: 12px 14px;
+  background: #0d121c;
+}
+
+.choices button span {
+  color: var(--dim);
+  font-size: 13px;
+}
+
+.choices button:first-child {
+  border-color: #2b5f7a;
+}
+
+.note {
+  margin: 14px 0 0;
+  min-height: 1.4em;
+  font-size: 13px;
+  color: var(--goal);
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 700px) {
+  .hud-bottom {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  nav {
+    flex-wrap: wrap;
+  }
+
+  nav button {
+    flex: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .banner {
+    animation: none;
+  }
+}
