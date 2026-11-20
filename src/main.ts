@@ -174,7 +174,7 @@ async function calibrate(): Promise<void> {
   }
   const wasPaused = paused;
   paused = true;
-  const result = await runCalibration(source, { points: 9, fullscreen: true });
+  const result = await runCalibration(source, { points: 9 });
   paused = wasPaused;
   if (result.ok && result.crossError > POOR_CALIBRATION) flash('That calibration was poor. Face the light, keep your head still, and press C to try again.');
   else if (result.ok) flash(`Calibrated: about ${Math.round(result.crossError * 100)}% of the screen off, typically.`);

@@ -23,4 +23,5 @@ _Nothing recorded yet._
 |---|---|---|---|---|---|
 | MP-T1 | 2026-11-19 | docs | closed | Start the permanent ticket log in the ticket database | — |
 | MP-T2 | 2026-11-19 | feature | closed | three.js gaze-repulsion air-hockey puzzle: polygon collisions, drag, procedural solver-verified levels (MAT-T160) | 9bae509 |
-| MP-T3 | 2026-11-19 | chore | open | Rename the web game repo MindPuck to MindPuck.Web (GitHub, disk, ticket log, docs and scripts) at the owner's request | — |
+| MP-T3 | 2026-11-19 | chore | closed | Rename the web game repo MindPuck to MindPuck.Web (GitHub, disk, ticket log, docs and scripts) at the owner's request | e3e81ac |
+| MP-T4 | 2026-11-19 | fix | open | Calibration no longer switches to fullscreen, so its targets cover the same area the game is played in | — |
