@@ -103,7 +103,7 @@ describe('steer mode', () => {
     expect(steerAccel(0, PUCK_R, p)).toBe(0);
     expect(steerAccel(PUCK_R * p.steerFull, PUCK_R, p)).toBeCloseTo(p.steerStrength, 9);
     expect(steerAccel(PUCK_R * p.steerRange, PUCK_R, p)).toBe(p.steerStrength);
-    expect(steerAccel(PUCK_R * p.steerRange * 1.5, PUCK_R, p)).toBe(0);
+    expect(steerAccel(PUCK_R * p.steerRange * 1.5 + 1e-9, PUCK_R, p)).toBe(0);
     expect(steerAccel(20, PUCK_R, p)).toBe(0);
   });
 

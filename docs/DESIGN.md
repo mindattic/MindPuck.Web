@@ -43,14 +43,22 @@ You look at the puck itself, and it is driven toward the side of it you are look
 
 ```
 steer(d) = steerStrength, shaped by the distance d from the centre of the puck to the gaze point:
-           0 inside the dead zone (0.3 radii), rising to full at steerFull (1.5 radii),
-           full out to steerRange (4 radii), then fading to 0 at 6 radii
+           0 inside the dead zone (0.3 radii), rising to full at steerFull (2.2 radii),
+           full out to steerRange (6 radii), then fading to 0 at 9 radii
 ```
 
-- `steerStrength` 9, `steerFull` 1.5, `steerRange` 4, `steerDrag` 1.2.
+- `steerStrength` 9, `steerFull` 2.2, `steerRange` 6, `steerDrag` 1.2.
 - Looking at the centre of the puck, or well away from it, leaves it alone.
 - The direction is the line from the centre of the puck to the gaze point, so the eyes stay on the
   puck and follow it as it moves.
+
+An eye tracker is rarely accurate to within the width of the puck, so the game does not rely on
+the absolute gaze point here. In steer mode the player is looking at the puck by definition, so
+the game shell measures the standing offset between the gaze point and the puck and subtracts it:
+within a third of a second while the puck is held at the start of an attempt ("find the puck"),
+and with a six-second time constant during play. What remains is the movement of the eyes toward
+one edge. The same moment gives the tracker a free calibration point: the shell sends it a hint
+that the player is looking at the puck. This lives in the shell (`src/main.ts`), not in the core.
 
 ### Repulsor
 

@@ -195,6 +195,12 @@ export class TableRenderer {
     };
   }
 
+  /** Turn a table position into a normalized screen point (0..1, y down). */
+  tableToScreen(x: number, y: number): Vec {
+    const p = new THREE.Vector3(x, 0, y).project(this.camera);
+    return { x: (p.x + 1) / 2, y: (1 - p.y) / 2 };
+  }
+
   setLevel(level: Level): void {
     this.level = level;
     for (const child of [...this.levelGroup.children]) {

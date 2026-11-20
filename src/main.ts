@@ -62,7 +62,7 @@ const MODE_NAME: Record<GazeMode, string> = { attract: 'Magnetic', steer: 'Steer
 const MODE_COLOR: Record<GazeMode, string> = { attract: '#ff9ad5', steer: '#5fe3a1', repel: '#7fd4ff' };
 const MODE_HELP: Record<GazeMode, string> = {
   attract: 'Magnetic: the puck goes to where you look.',
-  steer: 'Steer: look at the edge of the puck on the side it should go. Look at its centre to let it be.',
+  steer: 'Steer: keep your eyes on the puck, and shift them toward the edge on the side it should go.',
   repel: 'Repulsor: the puck is pushed away from where you look.',
 };
 
@@ -78,6 +78,19 @@ let winAt = 0;
 /** The puck is held still until this time: a moment to find it before the gaze starts pushing. */
 let holdUntil = 0;
 const HOLD_MS = 900;
+/** Steer needs the player's eyes on the puck before it starts, so its hold is longer. */
+const STEER_HOLD_MS = 1700;
+const holdMs = () => (mode === 'steer' ? STEER_HOLD_MS : HOLD_MS);
+
+/**
+ * Steer mode works from where the gaze is relative to the puck, and an eye tracker is rarely
+ * accurate to within a puck's width. But in steer mode the player is, by definition, looking at
+ * the puck. So the game measures the standing offset between the gaze point and the puck and takes
+ * it out: quickly while the puck is held at the start, slowly during play. What is left is the
+ * part that matters, the small movement of the eyes toward one edge of the puck.
+ */
+const steerOffset: Vec = { x: 0, y: 0 };
+let hinted = false;
 
 function loadLevel(): void {
   level = generateLevel(run.seed, run.index, params);
@@ -87,7 +100,8 @@ function loadLevel(): void {
   renderer.setLevel(level);
   renderer.setPath(null);
   winAt = 0;
-  holdUntil = performance.now() + HOLD_MS;
+  holdUntil = performance.now() + holdMs();
+  hinted = false;
   $('level').textContent = `Level ${run.index + 1}`;
   showMode();
   $('banner').hidden = true;
@@ -126,7 +140,8 @@ function restart(): void {
   if (bot) bot = newBot();
   renderer.setPath(null);
   winAt = 0;
-  holdUntil = performance.now() + HOLD_MS;
+  holdUntil = performance.now() + holdMs();
+  hinted = false;
   $('banner').hidden = true;
 }
 
@@ -358,11 +373,33 @@ function frame(now: number): void {
   last = now;
   let gaze: Vec | null = null;
 
-  if (!paused && !sim.won && now < holdUntil) {
+  const held = !paused && !sim.won && now < holdUntil;
+  const looking = bot || paused ? null : playerGaze(now);
+  let steered: Vec | null = looking;
+  if (mode === 'steer' && looking) {
+    const ox = looking.x - sim.pos.x;
+    const oy = looking.y - sim.pos.y;
+    // Fast while the puck waits at the start (the player is finding it), slow in play, so that a
+    // deliberate look at one edge is not absorbed before it has done its work.
+    const follow = 1 - Math.exp(-elapsed / (held ? 0.3 : 6));
+    if (held || Math.hypot(ox - steerOffset.x, oy - steerOffset.y) < 4) {
+      steerOffset.x += (ox - steerOffset.x) * follow;
+      steerOffset.y += (oy - steerOffset.y) * follow;
+    }
+    steered = { x: looking.x - steerOffset.x, y: looking.y - steerOffset.y };
+    // The player is looking at the puck: that is a free calibration point for the tracker.
+    if (held && !hinted && holdUntil - now < 500) {
+      hinted = true;
+      const at = renderer.tableToScreen(sim.pos.x, sim.pos.y);
+      source?.hint?.(at.x, at.y, 0.3);
+    }
+  }
+
+  if (held) {
     accumulator = 0;
-    gaze = bot ? null : playerGaze(now);
+    gaze = steered;
   } else if (!paused && !sim.won) {
-    gaze = bot ? bot.gaze : playerGaze(now);
+    gaze = bot ? bot.gaze : steered;
     accumulator += elapsed;
     sim.impact = 0;
     while (accumulator >= params.dt && !sim.won) {
@@ -387,7 +424,7 @@ function frame(now: number): void {
       banner.hidden = false;
     }
   } else if (!paused) {
-    gaze = bot ? null : playerGaze(now);
+    gaze = bot ? null : steered;
   }
 
   if (winAt && now - winAt > 1900) nextLevel();
