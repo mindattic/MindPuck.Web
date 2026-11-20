@@ -22,4 +22,4 @@ _Nothing recorded yet._
 | ID | Date | Type | Status | Summary | Ref |
 |---|---|---|---|---|---|
 | MP-T1 | 2026-11-19 | docs | closed | Start the permanent ticket log in the ticket database | — |
-| MP-T2 | 2026-11-19 | feature | open | three.js gaze-repulsion air-hockey puzzle: polygon collisions, drag, procedural solver-verified levels (MAT-T160) | — |
+| MP-T2 | 2026-11-19 | feature | closed | three.js gaze-repulsion air-hockey puzzle: polygon collisions, drag, procedural solver-verified levels (MAT-T160) | 9bae509 |
