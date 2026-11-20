@@ -20,7 +20,7 @@ MindPuck expects the EyeTracker repo checked out beside it:
 
 ```
 D:\Projects\MindAttic\MindAttic.EyeTracker
-D:\Projects\MindAttic\MindPuck
+D:\Projects\MindAttic\MindPuck.Web
 ```
 
 PowerShell:
@@ -29,7 +29,7 @@ PowerShell:
 cd D:\Projects\MindAttic\MindAttic.EyeTracker
 npm install
 npm run build
-cd D:\Projects\MindAttic\MindPuck
+cd D:\Projects\MindAttic\MindPuck.Web
 npm install
 npm start
 ```

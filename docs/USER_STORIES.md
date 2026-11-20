@@ -1,6 +1,6 @@
 ---
 codex: 1
-project: MindPuck
+project: MindPuck.Web
 code: MP
 layer: stories
 status: living
@@ -8,7 +8,7 @@ updated: 2026-11-19
 ---
 <!-- GENERATED from MindAttic.Tickets/data/Tickets.db by `tickets db render`. Do not edit: this file is rewritten from the database; change stories and tickets with the tickets CLI. -->
 
-# MindPuck — User Stories
+# MindPuck.Web — User Stories
 > ✅ done (shipped & tested) · 🟡 partial · ⬜ planned. Every ✅ cites the test.
 
 ## Priority backlog
@@ -23,3 +23,4 @@ _Nothing recorded yet._
 |---|---|---|---|---|---|
 | MP-T1 | 2026-11-19 | docs | closed | Start the permanent ticket log in the ticket database | — |
 | MP-T2 | 2026-11-19 | feature | closed | three.js gaze-repulsion air-hockey puzzle: polygon collisions, drag, procedural solver-verified levels (MAT-T160) | 9bae509 |
+| MP-T3 | 2026-11-19 | chore | open | Rename the web game repo MindPuck to MindPuck.Web (GitHub, disk, ticket log, docs and scripts) at the owner's request | — |
