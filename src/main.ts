@@ -7,7 +7,16 @@ import {
   type GazeSample,
   type GazeSource,
 } from '@mindattic/eyetracker';
-import { DEFAULT_PARAMS, PuckSim, SolverBot, generateLevel, type Level, type Vec } from './core/index.js';
+import {
+  DEFAULT_BOT,
+  DEFAULT_PARAMS,
+  PuckSim,
+  SolverBot,
+  generateLevel,
+  type GazeMode,
+  type Level,
+  type Vec,
+} from './core/index.js';
 import { GameAudio } from './game/audio.js';
 import { TableRenderer } from './game/renderer.js';
 
@@ -36,6 +45,18 @@ function saveRun(): void {
   }
 }
 
+// ---------- gaze mode: magnetic (the default) or repulsor, switched with F1 ----------
+const MODE_KEY = 'mindpuck.mode';
+let mode: GazeMode = 'attract';
+try {
+  if (localStorage.getItem(MODE_KEY) === 'repel') mode = 'repel';
+} catch {
+  // Storage is optional.
+}
+if (query.get('mode') === 'repel' || query.get('mode') === 'attract') mode = query.get('mode') as GazeMode;
+const newBot = () => new SolverBot(level, params, { ...DEFAULT_BOT, mode });
+const parOf = () => (mode === 'attract' ? level.parAttract : level.par);
+
 // ---------- world ----------
 const canvas = $<HTMLCanvasElement>('table');
 const renderer = new TableRenderer(canvas, params);
@@ -52,20 +73,41 @@ const HOLD_MS = 900;
 function loadLevel(): void {
   level = generateLevel(run.seed, run.index, params);
   sim = new PuckSim(level, params);
-  bot = bot ? new SolverBot(level, params) : null;
+  sim.mode = mode;
+  bot = bot ? newBot() : null;
   renderer.setLevel(level);
   renderer.setPath(null);
   winAt = 0;
   holdUntil = performance.now() + HOLD_MS;
   $('level').textContent = `Level ${run.index + 1}`;
-  $('par').textContent = `${level.par.toFixed(1)} s`;
+  showMode();
   $('banner').hidden = true;
   saveRun();
 }
 
+function showMode(): void {
+  $('par').textContent = `${parOf().toFixed(1)} s`;
+  const button = document.querySelector<HTMLButtonElement>('[data-act="mode"]')!;
+  button.textContent = mode === 'attract' ? 'Magnetic' : 'Repulsor';
+}
+
+function toggleMode(): void {
+  mode = mode === 'attract' ? 'repel' : 'attract';
+  try {
+    localStorage.setItem(MODE_KEY, mode);
+  } catch {
+    // Storage is optional.
+  }
+  sim.mode = mode;
+  showMode();
+  restart();
+  flash(mode === 'attract' ? 'Magnetic: the puck goes to where you look.' : 'Repulsor: the puck is pushed away from where you look.');
+}
+
 function restart(): void {
   sim.reset();
-  if (bot) bot = new SolverBot(level, params);
+  if (bot) bot = newBot();
+  renderer.setPath(null);
   winAt = 0;
   holdUntil = performance.now() + HOLD_MS;
   $('banner').hidden = true;
@@ -77,7 +119,7 @@ function nextLevel(): void {
 }
 
 function toggleBot(): void {
-  bot = bot ? null : new SolverBot(level, params);
+  bot = bot ? null : newBot();
   renderer.setPath(null);
   document.querySelector('[data-act="bot"]')!.setAttribute('aria-pressed', String(!!bot));
   restart();
@@ -201,8 +243,9 @@ function refreshStatus(): void {
   const el = $('status');
   let text = '';
   let warn = false;
-  if (bot) text = 'The solver is playing. Watch where it looks: behind the puck, never at the goal.';
-  else if (sourceKind === 'mouse') text = 'The pointer is your gaze. Keep it behind the puck.';
+  const pull = mode === 'attract';
+  if (bot) text = pull ? 'The solver is playing. Watch where it looks: along the route, a step ahead of the puck.' : 'The solver is playing. Watch where it looks: behind the puck, never at the goal.';
+  else if (sourceKind === 'mouse') text = pull ? 'The pointer is your gaze. The puck follows it.' : 'The pointer is your gaze. Keep it behind the puck.';
   else if (sourceKind === 'phone' && remoteTrackers === 0) {
     text = `Waiting for a camera. Start the bridge, then open ${phoneAddress()} on your phone (or http://${bridgeHost}/tracker/ in another window).`;
     warn = true;
@@ -212,7 +255,7 @@ function refreshStatus(): void {
   } else if (latest && !latest.calibrated) {
     text = 'Not calibrated yet: press C. Until then the gaze point is a rough guess.';
     warn = true;
-  } else if (sourceKind) text = 'Look behind the puck to push it. Look far away to let it glide.';
+  } else if (sourceKind) text = pull ? 'Look where you want the puck to go. F1 switches to the repulsor.' : 'Look behind the puck to push it. Look far away to let it glide. F1 switches to magnetic.';
   else text = 'Choose how to play';
   el.textContent = text;
   el.className = warn ? 'status warn' : 'status';
@@ -237,6 +280,7 @@ const actions: Record<string, () => void> = {
   restart,
   skip: nextLevel,
   bot: toggleBot,
+  mode: toggleMode,
   calibrate: () => void calibrate(),
   menu: openMenu,
 };
@@ -252,6 +296,12 @@ addEventListener('keydown', (ev) => {
   if (ev.repeat || ev.ctrlKey || ev.metaKey || ev.altKey) return;
   const menuOpen = !$('menu').hidden;
   const key = ev.key.toLowerCase();
+  if (key === 'f1') {
+    // F1 is the browser's help key; this game uses it for the mode switch.
+    ev.preventDefault();
+    toggleMode();
+    return;
+  }
   if (key === 'escape') {
     if (menuOpen && source) closeMenu();
     else if (!menuOpen) openMenu();
@@ -304,13 +354,13 @@ function frame(now: number): void {
       winAt = now;
       audio.goal();
       const banner = $('banner');
-      const beat = !bot && sim.time <= level.par;
+      const beat = !bot && sim.time <= parOf();
       banner.innerHTML = '';
       banner.append('GOAL');
       const detail = document.createElement('small');
       detail.textContent = bot
         ? `The solver took ${sim.time.toFixed(1)} s`
-        : `${sim.time.toFixed(1)} s${beat ? ', under par' : ` (par ${level.par.toFixed(1)} s)`}`;
+        : `${sim.time.toFixed(1)} s${beat ? ', under par' : ` (par ${parOf().toFixed(1)} s)`}`;
       banner.append(detail);
       banner.hidden = false;
     }
@@ -321,7 +371,7 @@ function frame(now: number): void {
   if (winAt && now - winAt > 1900) nextLevel();
 
   $('time').textContent = sim.time.toFixed(1);
-  $('time').parentElement!.classList.toggle('beat', sim.won && sim.time <= level.par);
+  $('time').parentElement!.classList.toggle('beat', sim.won && sim.time <= parOf());
   if (now - statusTick > 500) {
     statusTick = now;
     refreshStatus();

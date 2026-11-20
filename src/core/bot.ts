@@ -1,7 +1,7 @@
 import type { Vec } from './geometry.js';
 import type { Level } from './level.js';
 import { NavGrid } from './navgrid.js';
-import { DEFAULT_PARAMS, PuckSim, repelAccel, winRadius, type PhysicsParams } from './physics.js';
+import { DEFAULT_PARAMS, PuckSim, repelAccel, winRadius, type GazeMode, type PhysicsParams } from './physics.js';
 import { gaussian, mulberry32, type Rng } from './rng.js';
 
 export interface BotOptions {
@@ -16,9 +16,11 @@ export interface BotOptions {
   /** The speed the bot tries to travel at. */
   cruise: number;
   seed: number;
+  /** Which way the gaze acts in the game the bot is playing. */
+  mode: GazeMode;
 }
 
-export const DEFAULT_BOT: BotOptions = { noise: 0.4, noiseTime: 0.3, lag: 0.12, timeLimit: 75, cruise: 3.2, seed: 1 };
+export const DEFAULT_BOT: BotOptions = { noise: 0.4, noiseTime: 0.3, lag: 0.12, timeLimit: 75, cruise: 3.2, seed: 1, mode: 'repel' };
 
 const DECIDE_EVERY = 4; // simulation steps between decisions: 30 a second at 120 steps a second
 const REPLAN_EVERY = 60; // simulation steps between route searches: twice a second
@@ -107,6 +109,13 @@ export class SolverBot {
     const toGoal = Math.hypot(lv.goal.x - pos.x, lv.goal.y - pos.y);
     const speed = Math.hypot(vel.x, vel.y);
 
+    // Magnetic: simply look where the puck should go next. The pull does the rest.
+    if (this.options.mode === 'attract') {
+      this.aim.x = this.target.x;
+      this.aim.y = this.target.y;
+      return;
+    }
+
     // Sitting on the pad: look away and let it settle.
     if (toGoal < winRadius(lv) * 0.7 && speed < p.restSpeed * 0.8) {
       const corner = this.farCorner(pos);
@@ -182,6 +191,7 @@ export function solveLevel(
   grid?: NavGrid,
 ): SolveResult {
   const sim = new PuckSim(level, params);
+  sim.mode = options.mode;
   const bot = new SolverBot(level, params, options, grid);
   const maxSteps = Math.ceil(options.timeLimit / params.dt);
   for (let i = 0; i < maxSteps; i++) {

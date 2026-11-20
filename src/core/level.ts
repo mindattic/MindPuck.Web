@@ -28,8 +28,10 @@ export interface Level {
   cupAngle: number;
   /** Everything the puck bounces off, the cup's walls included. */
   obstacles: Polygon[];
-  /** How long the solver took to win, in seconds. Shown to the player as the time to beat. */
+  /** How long the solver took to win in repulsor mode, in seconds. Shown to the player as the time to beat. */
   par: number;
+  /** The same for magnetic mode. */
+  parAttract: number;
   /** How many candidates were generated before one passed the solver. */
   attempts: number;
 }

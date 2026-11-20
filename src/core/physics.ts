@@ -1,6 +1,12 @@
 import { closestOnSegment, pointInPolygon, type Vec } from './geometry.js';
 import type { Level } from './level.js';
 
+/**
+ * What the gaze does to the puck. "attract" (magnetic) pulls the puck to where you look.
+ * "repel" pushes it away: look where you do not want it to go.
+ */
+export type GazeMode = 'attract' | 'repel';
+
 /** Every number that shapes how the table feels. docs/DESIGN.md explains each one. */
 export interface PhysicsParams {
   /** Peak push from the gaze point, in units per second squared. */
@@ -11,6 +17,12 @@ export interface PhysicsParams {
   repelRange: number;
   /** Looking at the very centre of the puck pushes nowhere; the push fades in over this fraction of its radius. */
   deadZone: number;
+  /** Magnetic mode: the pull toward the gaze point once the puck is farther than `pullSoftness` away. */
+  pullStrength: number;
+  /** Magnetic mode: inside this distance the pull eases off in proportion, like a spring, so the puck settles on the gaze point. */
+  pullSoftness: number;
+  /** Magnetic mode: extra drag while the gaze holds the puck, which stops it circling the point it is pulled to. */
+  pullDrag: number;
   /** Air drag: the fraction of speed lost per second while gliding. */
   drag: number;
   /** Drag on the goal pad, which is what lets the puck come to rest there. */
@@ -35,6 +47,9 @@ export const DEFAULT_PARAMS: PhysicsParams = {
   repelSoftness: 2,
   repelRange: 6,
   deadZone: 0.3,
+  pullStrength: 14,
+  pullSoftness: 1.5,
+  pullDrag: 3.5,
   drag: 0.55,
   padDrag: 3.5,
   friction: 0.06,
@@ -63,6 +78,11 @@ export function repelAccel(d: number, puckRadius: number, p: PhysicsParams): num
   return core * reach * reach * centre;
 }
 
+/** Magnetic mode: how hard the gaze pulls the puck from distance d. Zero when the puck is on the gaze point. */
+export function pullAccel(d: number, p: PhysicsParams): number {
+  return p.pullStrength * Math.min(d / p.pullSoftness, 1);
+}
+
 /** The win radius: how close the puck's centre must be to the goal's centre. */
 export function winRadius(level: Level): number {
   return level.goal.r - level.puckRadius * 0.6;
@@ -73,6 +93,8 @@ export function winRadius(level: Level): number {
  * collisions with every wall segment, so the puck bounces correctly off faces and corners alike.
  */
 export class PuckSim {
+  /** What the gaze does. It can be changed at any time, even mid-flight. */
+  mode: GazeMode = 'attract';
   pos: Vec;
   vel: Vec = { x: 0, y: 0 };
   /** Seconds simulated since the last reset. */
@@ -141,7 +163,8 @@ export class PuckSim {
       const dy = pos.y - gaze.y;
       const d = Math.hypot(dx, dy);
       if (d > 1e-9) {
-        const a = repelAccel(d, r, p);
+        // Repel pushes along the line from the gaze point to the puck; attract pulls back along it.
+        const a = this.mode === 'attract' ? -pullAccel(d, p) : repelAccel(d, r, p);
         ax = (dx / d) * a;
         ay = (dy / d) * a;
       }
@@ -154,7 +177,8 @@ export class PuckSim {
     const gx = pos.x - lv.goal.x;
     const gy = pos.y - lv.goal.y;
     const goalDist = Math.hypot(gx, gy);
-    const damp = Math.exp(-(goalDist < lv.goal.r ? p.padDrag : p.drag) * dt);
+    const held = gaze !== null && this.mode === 'attract';
+    const damp = Math.exp(-((goalDist < lv.goal.r ? p.padDrag : p.drag) + (held ? p.pullDrag : 0)) * dt);
     vel.x *= damp;
     vel.y *= damp;
     let speed = Math.hypot(vel.x, vel.y);

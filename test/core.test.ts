@@ -36,6 +36,7 @@ function emptyLevel(obstacles: Polygon[] = []): Level {
     cupAngle: 0,
     obstacles,
     par: 0,
+    parAttract: 0,
     attempts: 0,
   };
 }

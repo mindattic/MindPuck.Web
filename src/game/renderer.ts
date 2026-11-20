@@ -16,6 +16,7 @@ const COLORS = {
   puckGlow: 0x7fd4ff,
   goal: 0xffc266,
   gaze: 0x7fd4ff,
+  pull: 0xff9ad5,
   path: 0x5fe3a1,
 };
 
@@ -34,7 +35,13 @@ export class TableRenderer {
   private readonly goalFill: THREE.Mesh;
   private readonly goalProgress: THREE.Mesh;
   private readonly field: THREE.Mesh;
-  private readonly fieldUniforms: { uTime: { value: number }; uStrength: { value: number }; uSoft: { value: number } };
+  private readonly fieldUniforms: {
+    uTime: { value: number };
+    uStrength: { value: number };
+    uSoft: { value: number };
+    uDir: { value: number };
+    uColor: { value: THREE.Color };
+  };
   private readonly trail: THREE.Line;
   private readonly trailPositions = new Float32Array(TRAIL * 3);
   private readonly pathLine: THREE.Line;
@@ -101,23 +108,26 @@ export class TableRenderer {
       uTime: { value: 0 },
       uStrength: { value: 1 },
       uSoft: { value: params.repelSoftness / params.repelRange },
+      uDir: { value: -1 },
+      uColor: { value: new THREE.Color(COLORS.pull) },
     };
     this.field = new THREE.Mesh(
       new THREE.PlaneGeometry(2, 2),
       new THREE.ShaderMaterial({
-        uniforms: { ...this.fieldUniforms, uColor: { value: new THREE.Color(COLORS.gaze) } },
+        uniforms: this.fieldUniforms,
         transparent: true,
         depthWrite: false,
         blending: THREE.AdditiveBlending,
         vertexShader: 'varying vec2 vUv; void main(){ vUv = uv * 2.0 - 1.0; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
         fragmentShader: `
-          varying vec2 vUv; uniform float uTime; uniform float uStrength; uniform float uSoft; uniform vec3 uColor;
+          varying vec2 vUv; uniform float uTime; uniform float uStrength; uniform float uSoft; uniform float uDir; uniform vec3 uColor;
           void main(){
             float r = length(vUv);
             if (r > 1.0) discard;
             float reach = (1.0 - r) * (1.0 - r);
             float push = reach / (1.0 + (r / uSoft) * (r / uSoft));
-            float rings = 0.5 + 0.5 * sin(r * 34.0 - uTime * 7.0);
+            // uDir +1: rings travel outward (repulsor). -1: they fall inward (magnet).
+            float rings = 0.5 + 0.5 * sin(r * 34.0 - uDir * uTime * 7.0);
             float core = smoothstep(0.035, 0.0, r);
             float a = push * (0.16 + 0.5 * rings * rings) + core;
             gl_FragColor = vec4(uColor, a * uStrength);
@@ -273,6 +283,10 @@ export class TableRenderer {
     if (gaze) this.field.position.set(gaze.x, 0.03, gaze.y);
     this.fieldUniforms.uTime.value = timeSeconds;
     this.fieldUniforms.uStrength.value = 0.85;
+    const repel = sim.mode === 'repel';
+    this.fieldUniforms.uDir.value = repel ? 1 : -1;
+    this.fieldUniforms.uColor.value.setHex(repel ? COLORS.gaze : COLORS.pull);
+    this.field.scale.setScalar(repel ? this.fieldRange : this.fieldRange * 0.55);
 
     const progress = sim.won ? 1 : Math.min(sim.dwell / this.params.dwell, 1);
     this.goalProgress.visible = progress > 0;

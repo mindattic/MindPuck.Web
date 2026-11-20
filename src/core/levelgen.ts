@@ -25,7 +25,7 @@ const CUP_REACH = (CUP_INNER + CUP_WALL) * Math.SQRT2;
 /**
  * Build level number `index` of the run identified by `seed`. Levels get harder as the index
  * grows. Every level returned has been won by the solver bot (see bot.ts), with an unsteady gaze,
- * so it is known to be possible; `par` is the bot's time.
+ * in both gaze modes, so it is known to be possible; `par` and `parAttract` are the bot's times.
  */
 export function generateLevel(seed: number, index: number, params: PhysicsParams = DEFAULT_PARAMS): Level {
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
@@ -44,9 +44,14 @@ export function generateLevel(seed: number, index: number, params: PhysicsParams
 function verify(level: Level, params: PhysicsParams, attempt: number): boolean {
   const grid = new NavGrid(level);
   if (!grid.findPath(level.start, level.goal)) return false;
-  const result = solveLevel(level, params, { ...DEFAULT_BOT, seed: mixSeed(level.seed, level.index, 1000 + attempt) }, grid);
+  // The level has to be winnable both ways the game can be played.
+  const seed = mixSeed(level.seed, level.index, 1000 + attempt);
+  const result = solveLevel(level, params, { ...DEFAULT_BOT, seed, mode: 'repel' }, grid);
   if (!result.solved) return false;
+  const pulled = solveLevel(level, params, { ...DEFAULT_BOT, seed, mode: 'attract' }, grid);
+  if (!pulled.solved) return false;
   level.par = Math.round(result.time * 10) / 10;
+  level.parAttract = Math.round(pulled.time * 10) / 10;
   level.attempts = attempt + 1;
   return true;
 }
@@ -126,6 +131,7 @@ function buildCandidate(rng: Rng, seed: number, index: number): Level {
     cupAngle,
     obstacles,
     par: 0,
+    parAttract: 0,
     attempts: 0,
   };
 }
