@@ -12,7 +12,27 @@ The gaze point may land up to 1.5 units outside the table.
 
 The puck is a circle of radius 0.42. The goal pad is a circle of radius 1.1.
 
-## The push
+## Two modes
+
+`PuckSim.mode` is `attract` (magnetic, the default) or `repel`. F1 switches during play.
+
+### Magnetic
+
+The gaze point pulls the puck toward itself:
+
+```
+pull(d) = pullStrength * min(d / pullSoftness, 1)
+```
+
+- `pullStrength` 14: the pull once the puck is more than `pullSoftness` away.
+- `pullSoftness` 1.5: inside this distance the pull shrinks in proportion to the distance, like a
+  spring, so the puck settles on the gaze point instead of being flung through it.
+- `pullDrag` 3.5: extra drag while the gaze is holding the puck. Without it the puck would circle
+  the point it is pulled to.
+
+The pull has no range limit. To win, look at the pad.
+
+### Repulsor
 
 The gaze point pushes the puck directly away from itself. With `d` the distance from the gaze point
 to the puck's centre, the acceleration is
@@ -106,7 +126,11 @@ Verification has two stages.
    wandering error with a standard deviation of 0.4 units (2.5% of the table's width), which is
    about what a calibrated webcam tracker gives.
 
-   The bot has 75 simulated seconds. If it wins, the level is accepted and its time becomes the par.
+   The bot has 75 simulated seconds.
+
+   It plays the level twice: once in repulsor mode as described, and once in magnetic mode, where
+   it simply looks at the next point on its route. Both must win. The two times are the level's
+   `par` and `parAttract`.
 
 In practice the first candidate nearly always passes, and the levels stay winnable when the bot's
 error is tripled (`npm run levels` reruns each level with other noise seeds to show this).

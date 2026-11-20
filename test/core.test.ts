@@ -15,6 +15,7 @@ import {
   pointInPolygon,
   pointPolygonDistance,
   polygonDistance,
+  pullAccel,
   rectPolygon,
   repelAccel,
   solveLevel,
@@ -40,6 +41,58 @@ function emptyLevel(obstacles: Polygon[] = []): Level {
     attempts: 0,
   };
 }
+
+function repelSim(): PuckSim {
+  const sim = new PuckSim(emptyLevel());
+  sim.mode = 'repel';
+  return sim;
+}
+
+describe('magnetic mode', () => {
+  it('is the default', () => {
+    expect(new PuckSim(emptyLevel()).mode).toBe('attract');
+  });
+
+  it('pulls nothing at the gaze point and no more than pullStrength far away', () => {
+    expect(pullAccel(0, DEFAULT_PARAMS)).toBe(0);
+    expect(pullAccel(DEFAULT_PARAMS.pullSoftness / 2, DEFAULT_PARAMS)).toBeCloseTo(DEFAULT_PARAMS.pullStrength / 2, 9);
+    expect(pullAccel(50, DEFAULT_PARAMS)).toBe(DEFAULT_PARAMS.pullStrength);
+  });
+
+  it('brings the puck to the point being looked at and holds it there', () => {
+    const sim = new PuckSim(emptyLevel());
+    const look = { x: 8, y: 2.5 };
+    for (let i = 0; i < 120 * 8; i++) sim.step(look);
+    expect(Math.hypot(sim.pos.x - look.x, sim.pos.y - look.y)).toBeLessThan(0.05);
+    expect(Math.hypot(sim.vel.x, sim.vel.y)).toBeLessThan(0.05);
+  });
+
+  it('wins by looking at the pad', () => {
+    const level = emptyLevel();
+    const sim = new PuckSim(level);
+    for (let i = 0; i < 120 * 15 && !sim.won; i++) sim.step(level.goal);
+    expect(sim.won).toBe(true);
+  });
+
+  it('can be switched to the repulsor', () => {
+    const sim = new PuckSim(emptyLevel());
+    const look = { x: 2, y: 4.5 };
+    sim.step(look);
+    expect(sim.vel.x).toBeLessThan(0);
+    sim.reset();
+    sim.mode = 'repel';
+    sim.step(look);
+    expect(sim.vel.x).toBeGreaterThan(0);
+  });
+
+  it('gives every generated level a magnetic par, and the bot wins that way again', () => {
+    for (let index = 0; index < 12; index++) {
+      const level = generateLevel(31, index);
+      expect(level.parAttract).toBeGreaterThan(0);
+      expect(solveLevel(level, DEFAULT_PARAMS, { ...DEFAULT_BOT, mode: 'attract', seed: 70 + index }).solved).toBe(true);
+    }
+  });
+});
 
 describe('rng', () => {
   it('is deterministic and stays in 0..1', () => {
@@ -102,7 +155,7 @@ describe('repulsion', () => {
   });
 
   it('pushes the puck directly away from the gaze point', () => {
-    const sim = new PuckSim(emptyLevel());
+    const sim = repelSim();
     for (let i = 0; i < 60; i++) sim.step({ x: 2, y: 4.5 });
     expect(sim.vel.x).toBeGreaterThan(0);
     expect(Math.abs(sim.vel.y)).toBeLessThan(1e-9);
@@ -112,8 +165,8 @@ describe('repulsion', () => {
   });
 
   it('pushes harder the closer the gaze is', () => {
-    const near = new PuckSim(emptyLevel());
-    const far = new PuckSim(emptyLevel());
+    const near = repelSim();
+    const far = repelSim();
     near.step({ x: 2.2, y: 4.5 });
     far.step({ x: 0.5, y: 4.5 });
     expect(near.vel.x).toBeGreaterThan(far.vel.x);
@@ -132,7 +185,7 @@ describe('kinematics', () => {
   });
 
   it('never exceeds the speed limit', () => {
-    const sim = new PuckSim(emptyLevel());
+    const sim = repelSim();
     for (let i = 0; i < 2000; i++) {
       sim.step({ x: sim.pos.x - 0.3, y: sim.pos.y });
       expect(Math.hypot(sim.vel.x, sim.vel.y)).toBeLessThanOrEqual(DEFAULT_PARAMS.maxSpeed + 1e-9);
@@ -184,6 +237,7 @@ describe('collisions', () => {
   it('never lets the puck into an obstacle or off the table, however it is driven', () => {
     const level = generateLevel(5, 10);
     const sim = new PuckSim(level);
+    sim.mode = 'repel';
     const rng = mulberry32(9);
     let gaze = { x: 8, y: 4.5 };
     for (let i = 0; i < 120 * 60; i++) {

@@ -25,4 +25,4 @@ _Nothing recorded yet._
 | MP-T2 | 2026-11-19 | feature | closed | three.js gaze-repulsion air-hockey puzzle: polygon collisions, drag, procedural solver-verified levels (MAT-T160) | 9bae509 |
 | MP-T3 | 2026-11-19 | chore | closed | Rename the web game repo MindPuck to MindPuck.Web (GitHub, disk, ticket log, docs and scripts) at the owner's request | e3e81ac |
 | MP-T4 | 2026-11-19 | fix | closed | Calibration no longer switches to fullscreen, so its targets cover the same area the game is played in | e28d3e8 |
-| MP-T5 | 2026-11-19 | feature | open | Gaze now pulls the puck to where you look (magnetic) by default; F1 switches between magnetic and the original repulsor; levels are solver-verified in both modes | — |
+| MP-T5 | 2026-11-19 | feature | closed | Gaze now pulls the puck to where you look (magnetic) by default; F1 switches between magnetic and the original repulsor; levels are solver-verified in both modes | 8f6aadc |
