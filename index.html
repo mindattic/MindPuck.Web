@@ -20,12 +20,14 @@
   <nav>
     <button data-act="restart" title="Restart this level (R)">Restart</button>
     <button data-act="skip" title="Skip to the next level (N)">Skip</button>
-    <button data-act="mode" title="Switch between magnetic and repulsor (F1)">Magnetic</button>
+    <button data-act="mode" title="Change what your gaze does: magnetic, steer or repulsor (F1)">Magnetic</button>
     <button data-act="bot" title="Watch the solver play this level (B)">Show me</button>
     <button data-act="calibrate" title="Calibrate eye tracking (C)">Calibrate</button>
     <button data-act="menu" title="Change how you play (Esc)">Input</button>
   </nav>
 </footer>
+
+<div id="mode-label" class="mode-label" aria-live="polite"></div>
 
 <div id="banner" class="banner" hidden></div>
 
@@ -35,8 +37,9 @@
     <p class="lead">The puck goes where you <em>look</em>. Bring it to rest on the amber pad.</p>
     <ul class="how">
       <li><strong>Magnetic</strong> (the default): the puck is pulled to the point you look at. Lead it round the obstacles.</li>
+      <li><strong>Steer</strong>: keep your eyes on the puck. It goes toward the side of it you look at.</li>
       <li><strong>Repulsor</strong>: the puck is pushed away from where you look. Look where you don't want it to go.</li>
-      <li>Press <strong>F1</strong> at any time to switch between the two.</li>
+      <li>Press <strong>F1</strong> at any time to step through the three.</li>
     </ul>
     <div class="choices">
       <button data-source="camera"><strong>Use this camera</strong><span>Webcam eye tracking on this device</span></button>

@@ -34,7 +34,7 @@ for (let index = 0; index < count; index++) {
   }
   console.log(
     `level ${String(index).padStart(2)}  ${level.kind.padEnd(4)}  obstacles ${String(level.obstacles.length).padStart(2)}` +
-      `  par ${level.par.toFixed(1).padStart(5)}s  magnetic ${level.parAttract.toFixed(1).padStart(5)}s  candidates ${String(level.attempts).padStart(2)}` +
+      `  par ${level.par.toFixed(1).padStart(5)}s  magnetic ${level.parAttract.toFixed(1).padStart(5)}s  steer ${level.parSteer.toFixed(1).padStart(5)}s  candidates ${String(level.attempts).padStart(2)}` +
       `  reruns won ${wins}/${reruns}  ${ms.toFixed(0)} ms`,
   );
 }

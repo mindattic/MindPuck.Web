@@ -10,6 +10,7 @@ import {
 import {
   DEFAULT_BOT,
   DEFAULT_PARAMS,
+  GAZE_MODES,
   PuckSim,
   SolverBot,
   generateLevel,
@@ -49,13 +50,21 @@ function saveRun(): void {
 const MODE_KEY = 'mindpuck.mode';
 let mode: GazeMode = 'attract';
 try {
-  if (localStorage.getItem(MODE_KEY) === 'repel') mode = 'repel';
+  const saved = localStorage.getItem(MODE_KEY) as GazeMode | null;
+  if (saved && GAZE_MODES.includes(saved)) mode = saved;
 } catch {
   // Storage is optional.
 }
-if (query.get('mode') === 'repel' || query.get('mode') === 'attract') mode = query.get('mode') as GazeMode;
+if (GAZE_MODES.includes(query.get('mode') as GazeMode)) mode = query.get('mode') as GazeMode;
 const newBot = () => new SolverBot(level, params, { ...DEFAULT_BOT, mode });
-const parOf = () => (mode === 'attract' ? level.parAttract : level.par);
+const parOf = () => (mode === 'attract' ? level.parAttract : mode === 'steer' ? level.parSteer : level.par);
+const MODE_NAME: Record<GazeMode, string> = { attract: 'Magnetic', steer: 'Steer', repel: 'Repulsor' };
+const MODE_COLOR: Record<GazeMode, string> = { attract: '#ff9ad5', steer: '#5fe3a1', repel: '#7fd4ff' };
+const MODE_HELP: Record<GazeMode, string> = {
+  attract: 'Magnetic: the puck goes to where you look.',
+  steer: 'Steer: look at the edge of the puck on the side it should go. Look at its centre to let it be.',
+  repel: 'Repulsor: the puck is pushed away from where you look.',
+};
 
 // ---------- world ----------
 const canvas = $<HTMLCanvasElement>('table');
@@ -88,11 +97,19 @@ function loadLevel(): void {
 function showMode(): void {
   $('par').textContent = `${parOf().toFixed(1)} s`;
   const button = document.querySelector<HTMLButtonElement>('[data-act="mode"]')!;
-  button.textContent = mode === 'attract' ? 'Magnetic' : 'Repulsor';
+  button.textContent = MODE_NAME[mode];
+  // The label at the bottom centre always says which control scheme is live.
+  const label = $('mode-label');
+  label.style.setProperty('--mode', MODE_COLOR[mode]);
+  label.replaceChildren(
+    `Mode ${GAZE_MODES.indexOf(mode) + 1} of ${GAZE_MODES.length}`,
+    Object.assign(document.createElement('strong'), { textContent: MODE_NAME[mode] }),
+    'F1 next',
+  );
 }
 
 function toggleMode(): void {
-  mode = mode === 'attract' ? 'repel' : 'attract';
+  mode = GAZE_MODES[(GAZE_MODES.indexOf(mode) + 1) % GAZE_MODES.length];
   try {
     localStorage.setItem(MODE_KEY, mode);
   } catch {
@@ -101,7 +118,7 @@ function toggleMode(): void {
   sim.mode = mode;
   showMode();
   restart();
-  flash(mode === 'attract' ? 'Magnetic: the puck goes to where you look.' : 'Repulsor: the puck is pushed away from where you look.');
+  flash(MODE_HELP[mode]);
 }
 
 function restart(): void {
@@ -243,9 +260,14 @@ function refreshStatus(): void {
   const el = $('status');
   let text = '';
   let warn = false;
-  const pull = mode === 'attract';
-  if (bot) text = pull ? 'The solver is playing. Watch where it looks: along the route, a step ahead of the puck.' : 'The solver is playing. Watch where it looks: behind the puck, never at the goal.';
-  else if (sourceKind === 'mouse') text = pull ? 'The pointer is your gaze. The puck follows it.' : 'The pointer is your gaze. Keep it behind the puck.';
+  if (bot) {
+    text =
+      mode === 'attract'
+        ? 'The solver is playing. Watch where it looks: along the route, a step ahead of the puck.'
+        : mode === 'steer'
+          ? 'The solver is playing. Watch where it looks: just off the puck, on the side it wants it to go.'
+          : 'The solver is playing. Watch where it looks: behind the puck, never at the goal.';
+  } else if (sourceKind === 'mouse') text = `The pointer is your gaze. ${MODE_HELP[mode]}`;
   else if (sourceKind === 'phone' && remoteTrackers === 0) {
     text = `Waiting for a camera. Start the bridge, then open ${phoneAddress()} on your phone (or http://${bridgeHost}/tracker/ in another window).`;
     warn = true;
@@ -255,7 +277,7 @@ function refreshStatus(): void {
   } else if (latest && !latest.calibrated) {
     text = 'Not calibrated yet: press C. Until then the gaze point is a rough guess.';
     warn = true;
-  } else if (sourceKind) text = pull ? 'Look where you want the puck to go. F1 switches to the repulsor.' : 'Look behind the puck to push it. Look far away to let it glide. F1 switches to magnetic.';
+  } else if (sourceKind) text = `${MODE_HELP[mode]} F1 changes the mode.`;
   else text = 'Choose how to play';
   el.textContent = text;
   el.className = warn ? 'status warn' : 'status';

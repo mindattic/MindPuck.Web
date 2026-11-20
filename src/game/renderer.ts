@@ -17,6 +17,7 @@ const COLORS = {
   goal: 0xffc266,
   gaze: 0x7fd4ff,
   pull: 0xff9ad5,
+  steer: 0x5fe3a1,
   path: 0x5fe3a1,
 };
 
@@ -285,8 +286,8 @@ export class TableRenderer {
     this.fieldUniforms.uStrength.value = 0.85;
     const repel = sim.mode === 'repel';
     this.fieldUniforms.uDir.value = repel ? 1 : -1;
-    this.fieldUniforms.uColor.value.setHex(repel ? COLORS.gaze : COLORS.pull);
-    this.field.scale.setScalar(repel ? this.fieldRange : this.fieldRange * 0.55);
+    this.fieldUniforms.uColor.value.setHex(repel ? COLORS.gaze : sim.mode === 'steer' ? COLORS.steer : COLORS.pull);
+    this.field.scale.setScalar(repel ? this.fieldRange : sim.mode === 'steer' ? this.fieldRange * 0.3 : this.fieldRange * 0.55);
 
     const progress = sim.won ? 1 : Math.min(sim.dwell / this.params.dwell, 1);
     this.goalProgress.visible = progress > 0;

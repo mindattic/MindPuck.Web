@@ -12,9 +12,14 @@ The gaze point may land up to 1.5 units outside the table.
 
 The puck is a circle of radius 0.42. The goal pad is a circle of radius 1.1.
 
-## Two modes
+## Control schemes
 
-`PuckSim.mode` is `attract` (magnetic, the default) or `repel`. F1 switches during play.
+`PuckSim.mode` is `attract` (magnetic, the default), `steer` or `repel`. F1 steps through
+`GAZE_MODES` during play, and the HUD names the one in use at the bottom centre.
+
+To add a scheme: add its name to `GazeMode` and `GAZE_MODES`, give it an acceleration in
+`PuckSim.step` and a way of aiming in `SolverBot.decide`, add its par to `Level` and its solve to
+`verify` in `levelgen.ts`, and give it a name, colour and one-line help in `src/main.ts`.
 
 ### Magnetic
 
@@ -31,6 +36,21 @@ pull(d) = pullStrength * min(d / pullSoftness, 1)
   the point it is pulled to.
 
 The pull has no range limit. To win, look at the pad.
+
+### Steer
+
+You look at the puck itself, and it is driven toward the side of it you are looking at:
+
+```
+steer(d) = steerStrength, shaped by the distance d from the centre of the puck to the gaze point:
+           0 inside the dead zone (0.3 radii), rising to full at steerFull (1.5 radii),
+           full out to steerRange (4 radii), then fading to 0 at 6 radii
+```
+
+- `steerStrength` 9, `steerFull` 1.5, `steerRange` 4, `steerDrag` 1.2.
+- Looking at the centre of the puck, or well away from it, leaves it alone.
+- The direction is the line from the centre of the puck to the gaze point, so the eyes stay on the
+  puck and follow it as it moves.
 
 ### Repulsor
 
@@ -128,9 +148,10 @@ Verification has two stages.
 
    The bot has 75 simulated seconds.
 
-   It plays the level twice: once in repulsor mode as described, and once in magnetic mode, where
-   it simply looks at the next point on its route. Both must win. The two times are the level's
-   `par` and `parAttract`.
+   It plays the level once in each mode: repulsor as described; magnetic, where it simply looks at
+   the next point on its route; and steer, where it looks just off the puck on the side it wants
+   it to accelerate toward. All three must win. The times are the level's `par`, `parAttract` and
+   `parSteer`.
 
 In practice the first candidate nearly always passes, and the levels stay winnable when the bot's
 error is tripled (`npm run levels` reruns each level with other noise seeds to show this).

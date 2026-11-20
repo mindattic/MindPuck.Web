@@ -2,14 +2,17 @@
 
 Move the puck into the goal with your eyes.
 
-There are two ways your gaze can act, and **F1** switches between them at any time:
+There are three control schemes, and **F1** steps through them at any time. The one in use is
+always named at the bottom centre of the screen.
 
 - **Magnetic** (the default): the puck is pulled to the point you look at. Look where you want it
   to go and lead it round the obstacles.
+- **Steer**: keep your eyes on the puck. It travels toward the side of it you look at: look at its
+  right edge and it goes right. Look at its centre and it is left alone.
 - **Repulsor**: a reverse black hole. The puck is pushed away from where you look, harder the
   closer you look. Look behind it to send it forward; look far away and it glides on its own.
 
-Either way it moves like a puck on an air-hockey table, bounces off everything, and has to come to
+Whichever you use, it moves like a puck on an air-hockey table, bounces off everything, and has to come to
 rest on the amber pad.
 
 This is the web version, drawn with three.js. Eye tracking comes from
@@ -59,7 +62,7 @@ The webcam and pointer work there. For a phone, run the bridge as well
 
 | Key | Button | Does |
 | --- | --- | --- |
-| F1 | Magnetic / Repulsor | Switch what your gaze does to the puck |
+| F1 | Magnetic / Steer / Repulsor | Step to the next control scheme |
 | R | Restart | Put the puck back at the start |
 | N | Skip | Go to the next level |
 | B | Show me | The solver plays the level, showing where it looks |
@@ -80,7 +83,7 @@ address: `?seed=1234&level=5`.
 
 Every level is generated from the seed, then **played by a solver before you see it**. The solver
 steers the puck with a simulated gaze point that wobbles and lags the way a real eye tracker does.
-The solver must win in both modes, or the level is thrown away and another is generated. The
+The solver must win in all three modes, or the level is thrown away and another is generated. The
 solver's time in the mode you are playing is the par shown in the corner. [docs/DESIGN.md](docs/DESIGN.md) has the details and every tuning number.
 
 `npm run levels` prints a run of levels and how the solver did:

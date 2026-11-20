@@ -2,6 +2,9 @@ import type { Vec } from './geometry.js';
 import type { Level } from './level.js';
 import { NavGrid } from './navgrid.js';
 import { DEFAULT_PARAMS, PuckSim, repelAccel, winRadius, type GazeMode, type PhysicsParams } from './physics.js';
+
+/** Steer mode: how far from the centre of the puck the bot looks, in puck radii. Far enough that its unsteady gaze still points the right way. */
+const STEER_STANDOFF = 2.6;
 import { gaussian, mulberry32, type Rng } from './rng.js';
 
 export interface BotOptions {
@@ -137,6 +140,19 @@ export class SolverBot {
     let ax = (tx * wanted - vel.x) * 3;
     let ay = (ty * wanted - vel.y) * 3;
     let a = Math.hypot(ax, ay);
+
+    // Steer: look at the side of the puck it should accelerate toward, or straight at it to let it be.
+    if (this.options.mode === 'steer') {
+      if (a < 0.6) {
+        this.aim.x = pos.x;
+        this.aim.y = pos.y;
+      } else {
+        const reach = lv.puckRadius * STEER_STANDOFF;
+        this.aim.x = pos.x + (ax / a) * reach;
+        this.aim.y = pos.y + (ay / a) * reach;
+      }
+      return;
+    }
     if (a < 0.08) {
       const corner = this.farCorner(pos);
       this.aim.x = corner.x;

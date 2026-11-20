@@ -19,6 +19,7 @@ import {
   rectPolygon,
   repelAccel,
   solveLevel,
+  steerAccel,
   winRadius,
   type Level,
   type Polygon,
@@ -38,6 +39,7 @@ function emptyLevel(obstacles: Polygon[] = []): Level {
     obstacles,
     par: 0,
     parAttract: 0,
+    parSteer: 0,
     attempts: 0,
   };
 }
@@ -90,6 +92,44 @@ describe('magnetic mode', () => {
       const level = generateLevel(31, index);
       expect(level.parAttract).toBeGreaterThan(0);
       expect(solveLevel(level, DEFAULT_PARAMS, { ...DEFAULT_BOT, mode: 'attract', seed: 70 + index }).solved).toBe(true);
+    }
+  });
+});
+
+describe('steer mode', () => {
+  const p = DEFAULT_PARAMS;
+
+  it('does nothing at the centre of the puck or far from it, and is full at its edge', () => {
+    expect(steerAccel(0, PUCK_R, p)).toBe(0);
+    expect(steerAccel(PUCK_R * p.steerFull, PUCK_R, p)).toBeCloseTo(p.steerStrength, 9);
+    expect(steerAccel(PUCK_R * p.steerRange, PUCK_R, p)).toBe(p.steerStrength);
+    expect(steerAccel(PUCK_R * p.steerRange * 1.5, PUCK_R, p)).toBe(0);
+    expect(steerAccel(20, PUCK_R, p)).toBe(0);
+  });
+
+  it('drives the puck toward the side being looked at', () => {
+    const sim = new PuckSim(emptyLevel());
+    sim.mode = 'steer';
+    for (let i = 0; i < 30; i++) sim.step({ x: sim.pos.x + PUCK_R, y: sim.pos.y });
+    expect(sim.vel.x).toBeGreaterThan(0);
+    expect(Math.abs(sim.vel.y)).toBeLessThan(1e-9);
+    sim.reset();
+    for (let i = 0; i < 30; i++) sim.step({ x: sim.pos.x, y: sim.pos.y - PUCK_R });
+    expect(sim.vel.y).toBeLessThan(0);
+  });
+
+  it('leaves the puck alone when the gaze is on its centre', () => {
+    const sim = new PuckSim(emptyLevel());
+    sim.mode = 'steer';
+    for (let i = 0; i < 120; i++) sim.step({ x: sim.pos.x, y: sim.pos.y });
+    expect(Math.hypot(sim.vel.x, sim.vel.y)).toBe(0);
+  });
+
+  it('gives every generated level a steer par, and the bot wins that way again', () => {
+    for (let index = 0; index < 12; index++) {
+      const level = generateLevel(41, index);
+      expect(level.parSteer).toBeGreaterThan(0);
+      expect(solveLevel(level, DEFAULT_PARAMS, { ...DEFAULT_BOT, mode: 'steer', seed: 90 + index }).solved).toBe(true);
     }
   });
 });

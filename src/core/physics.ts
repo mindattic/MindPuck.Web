@@ -2,10 +2,16 @@ import { closestOnSegment, pointInPolygon, type Vec } from './geometry.js';
 import type { Level } from './level.js';
 
 /**
- * What the gaze does to the puck. "attract" (magnetic) pulls the puck to where you look.
+ * What the gaze does to the puck.
+ * "attract" (magnetic) pulls the puck to where you look.
+ * "steer" drives the puck toward the side of it you look at: look at its right edge and it goes
+ * right. You keep your eyes on the puck the whole time.
  * "repel" pushes it away: look where you do not want it to go.
  */
-export type GazeMode = 'attract' | 'repel';
+export type GazeMode = 'attract' | 'steer' | 'repel';
+
+/** The order F1 steps through. */
+export const GAZE_MODES: readonly GazeMode[] = ['attract', 'steer', 'repel'];
 
 /** Every number that shapes how the table feels. docs/DESIGN.md explains each one. */
 export interface PhysicsParams {
@@ -23,6 +29,14 @@ export interface PhysicsParams {
   pullSoftness: number;
   /** Magnetic mode: extra drag while the gaze holds the puck, which stops it circling the point it is pulled to. */
   pullDrag: number;
+  /** Steer mode: the drive when you look at the edge of the puck or just beyond it. */
+  steerStrength: number;
+  /** Steer mode: the drive builds from nothing at the centre of the puck to full at this many puck radii out. */
+  steerFull: number;
+  /** Steer mode: beyond this many puck radii the drive fades, so looking away lets the puck coast. */
+  steerRange: number;
+  /** Steer mode: extra drag while steering, which keeps the speed manageable. */
+  steerDrag: number;
   /** Air drag: the fraction of speed lost per second while gliding. */
   drag: number;
   /** Drag on the goal pad, which is what lets the puck come to rest there. */
@@ -50,6 +64,10 @@ export const DEFAULT_PARAMS: PhysicsParams = {
   pullStrength: 14,
   pullSoftness: 1.5,
   pullDrag: 3.5,
+  steerStrength: 9,
+  steerFull: 1.5,
+  steerRange: 4,
+  steerDrag: 1.2,
   drag: 0.55,
   padDrag: 3.5,
   friction: 0.06,
@@ -81,6 +99,25 @@ export function repelAccel(d: number, puckRadius: number, p: PhysicsParams): num
 /** Magnetic mode: how hard the gaze pulls the puck from distance d. Zero when the puck is on the gaze point. */
 export function pullAccel(d: number, p: PhysicsParams): number {
   return p.pullStrength * Math.min(d / p.pullSoftness, 1);
+}
+
+/**
+ * Steer mode: how hard the puck is driven toward a gaze point at distance d from its centre.
+ * Nothing at the centre (so looking straight at the puck lets it rest), full from the edge
+ * outward, fading to nothing well away from the puck.
+ */
+export function steerAccel(d: number, puckRadius: number, p: PhysicsParams): number {
+  const inner = p.deadZone * puckRadius;
+  const full = p.steerFull * puckRadius;
+  const far = p.steerRange * puckRadius;
+  const fade = far * 1.5;
+  if (d <= inner || d >= fade) return 0;
+  if (d < full) {
+    const u = (d - inner) / (full - inner);
+    return p.steerStrength * u * u * (3 - 2 * u);
+  }
+  if (d <= far) return p.steerStrength;
+  return p.steerStrength * (1 - (d - far) / (fade - far));
 }
 
 /** The win radius: how close the puck's centre must be to the goal's centre. */
@@ -164,7 +201,9 @@ export class PuckSim {
       const d = Math.hypot(dx, dy);
       if (d > 1e-9) {
         // Repel pushes along the line from the gaze point to the puck; attract pulls back along it.
-        const a = this.mode === 'attract' ? -pullAccel(d, p) : repelAccel(d, r, p);
+        // Steer drives the same way attract pulls, but only while the gaze is on or near the puck.
+        const a =
+          this.mode === 'attract' ? -pullAccel(d, p) : this.mode === 'steer' ? -steerAccel(d, r, p) : repelAccel(d, r, p);
         ax = (dx / d) * a;
         ay = (dy / d) * a;
       }
@@ -177,8 +216,8 @@ export class PuckSim {
     const gx = pos.x - lv.goal.x;
     const gy = pos.y - lv.goal.y;
     const goalDist = Math.hypot(gx, gy);
-    const held = gaze !== null && this.mode === 'attract';
-    const damp = Math.exp(-((goalDist < lv.goal.r ? p.padDrag : p.drag) + (held ? p.pullDrag : 0)) * dt);
+    const extra = gaze === null ? 0 : this.mode === 'attract' ? p.pullDrag : this.mode === 'steer' ? p.steerDrag : 0;
+    const damp = Math.exp(-((goalDist < lv.goal.r ? p.padDrag : p.drag) + extra) * dt);
     vel.x *= damp;
     vel.y *= damp;
     let speed = Math.hypot(vel.x, vel.y);

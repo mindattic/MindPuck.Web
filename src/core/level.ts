@@ -32,6 +32,8 @@ export interface Level {
   par: number;
   /** The same for magnetic mode. */
   parAttract: number;
+  /** The same for steer mode. */
+  parSteer: number;
   /** How many candidates were generated before one passed the solver. */
   attempts: number;
 }
