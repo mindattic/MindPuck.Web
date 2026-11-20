@@ -271,7 +271,9 @@ describe('collisions', () => {
     sim.vel = { x: 6, y: 0 };
     for (let i = 0; i < 240 && sim.vel.y === 0; i++) sim.step(null);
     expect(sim.vel.y).toBeLessThan(0);
-    expect(sim.vel.x).toBeGreaterThan(0);
+    // The corner-to-puck normal here is (-0.8, -0.6): the block is ahead of the puck, so the
+    // bounce sends it back and up, away from the block, not onward into it.
+    expect(sim.vel.x).toBeLessThan(0);
   });
 
   it('never lets the puck into an obstacle or off the table, however it is driven', () => {
