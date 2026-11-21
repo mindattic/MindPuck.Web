@@ -6,7 +6,7 @@ import {
   runCalibration,
   type GazeSample,
   type GazeSource,
-} from '@mindattic/eyetracker';
+} from '@mindattic/webcam';
 import {
   DEFAULT_BOT,
   DEFAULT_PARAMS,
@@ -174,7 +174,7 @@ interface BridgeConfig {
   tlsPort?: number | null;
   addresses?: string[];
 }
-/** When the game is served by the EyeTracker bridge it can load everything from it; otherwise it uses the CDN. */
+/** When the game is served by the Webcam bridge it can load everything from it; otherwise it uses the CDN. */
 const bridgeConfig: BridgeConfig = await fetch('/config.json')
   .then((r) => (r.ok ? r.json() : {}))
   .catch(() => ({}));

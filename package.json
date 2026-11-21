@@ -9,12 +9,12 @@
     "dev": "vite",
     "build": "tsc -p tsconfig.json --noEmit && vite build",
     "preview": "vite preview",
-    "start": "npm run build && node ../MindAttic.EyeTracker/bridge/server.mjs --mount /play=dist --open-path /play/",
+    "start": "npm run build && node ../MindAttic.Webcam/bridge/server.mjs --mount /play=dist --open-path /play/",
     "levels": "node tools/levels.mjs",
     "test": "vitest run"
   },
   "dependencies": {
-    "@mindattic/eyetracker": "file:../MindAttic.EyeTracker",
+    "@mindattic/webcam": "file:../MindAttic.Webcam",
     "three": "^0.187.0"
   },
   "devDependencies": {

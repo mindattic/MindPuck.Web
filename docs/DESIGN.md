@@ -6,7 +6,7 @@ This is the reference for the rules. The web, Unity and Unreal versions implemen
 ## The table
 
 World units. The table is 16 wide and 9 deep, origin at the top-left corner, `y` pointing down the
-screen. A normalized gaze point (0..1 on each axis, as MindAttic.EyeTracker reports it) is turned
+screen. A normalized gaze point (0..1 on each axis, as MindAttic.Webcam reports it) is turned
 into a table point by casting a ray from the camera through that screen position onto the table.
 The gaze point may land up to 1.5 units outside the table.
 

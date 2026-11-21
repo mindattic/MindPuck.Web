@@ -16,7 +16,7 @@ Whichever you use, it moves like a puck on an air-hockey table, bounces off ever
 rest on the amber pad.
 
 This is the web version, drawn with three.js. Eye tracking comes from
-[MindAttic.EyeTracker](https://github.com/mindattic/MindAttic.EyeTracker), using the webcam of the
+[MindAttic.Webcam](https://github.com/mindattic/MindAttic.Webcam), using the webcam of the
 computer you play on or the camera of a phone. A mouse or a finger can stand in for your eyes.
 
 The same game exists for Unity ([MindPuck.Unity](https://github.com/mindattic/MindPuck.Unity)) and
@@ -25,17 +25,17 @@ physics numbers and level generator.
 
 ## Run it
 
-MindPuck expects the EyeTracker repo checked out beside it:
+MindPuck expects the Webcam repo checked out beside it:
 
 ```
-D:\Projects\MindAttic\MindAttic.EyeTracker
+D:\Projects\MindAttic\MindAttic.Webcam
 D:\Projects\MindAttic\MindPuck.Web
 ```
 
 PowerShell:
 
 ```powershell
-cd D:\Projects\MindAttic\MindAttic.EyeTracker
+cd D:\Projects\MindAttic\MindAttic.Webcam
 npm install
 npm run build
 cd D:\Projects\MindAttic\MindPuck.Web
@@ -43,7 +43,7 @@ npm install
 npm start
 ```
 
-`npm start` builds the game and serves it from the EyeTracker bridge, then opens
+`npm start` builds the game and serves it from the Webcam bridge, then opens
 `http://localhost:8787/play/`. You should see the title card with three ways to play:
 
 - **Use this camera**: asks for the webcam, then runs a nine-dot calibration. Look at each dot
@@ -56,7 +56,7 @@ npm start
 
 For development with live reload, `npm run dev` serves the game alone on `http://localhost:5183`.
 The webcam and pointer work there. For a phone, run the bridge as well
-(`cd D:\Projects\MindAttic\MindAttic.EyeTracker; npm run bridge`).
+(`cd D:\Projects\MindAttic\MindAttic.Webcam; npm run bridge`).
 
 ## Controls
 
